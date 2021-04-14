@@ -1,11 +1,17 @@
 package com.example.rssfeed;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -24,12 +30,14 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
+    private final int PERMISSION_REQUEST_INTERNET = 1;
+
     // Interface views
     ListView lvItems;
     Button btnRefresh;
 
     // Other variables
-    ArrayList<String> newsItems;
+    ArrayList<NewsItem> newsItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,13 +47,30 @@ public class MainActivity extends AppCompatActivity {
         lvItems = findViewById(R.id.lvItems);
         btnRefresh = findViewById(R.id.btnRefresh);
 
-        newsItems = new ArrayList<String>();
+        newsItems = new ArrayList<NewsItem>();
 
 
         btnRefresh.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                new GetFeedAsync().execute();
+            public void onClick(View v)
+            {
+                if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED)
+                {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.INTERNET}, PERMISSION_REQUEST_INTERNET);
+                }
+                else
+                {
+                    new GetFeedAsync().execute();
+                }
+            }
+        });
+
+        lvItems.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(MainActivity.this, NewsItemActivity.class);
+                intent.putExtra("item", newsItems.get(position));
+                startActivity(intent);
             }
         });
     }
@@ -125,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 if(ni.hasAllProperties())
                                 {
-                                    newsItems.add(ni.getTitle());
+                                    newsItems.add(ni);
                                     break;
                                 }
                                 
@@ -172,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
 
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, newsItems);
+            NewsItemAdapter adapter = new NewsItemAdapter(MainActivity.this, android.R.layout.simple_list_item_1, newsItems);
             lvItems.setAdapter(adapter);
 
             dialog.dismiss();

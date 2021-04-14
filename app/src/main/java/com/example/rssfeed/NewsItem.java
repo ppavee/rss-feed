@@ -1,8 +1,9 @@
 package com.example.rssfeed;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class NewsItem
+public class NewsItem implements Serializable
 {
     private String title;
     private String link;
@@ -57,5 +58,11 @@ public class NewsItem
     {
         return this.title != null && this.description != null
                 && this.link != null && this.date != null;
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.title;
     }
 }
